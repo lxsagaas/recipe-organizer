@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Recipe Organizer</title>
+  <style>
+    :root {
+      --bg-color: #f4f5f7;
+      --card-bg: #ffffff;
+      --text-color: #333333;
+      --subtext-color: #555555;
+      --input-border: #cccccc;
+      --primary-color: #e65100;
+      --primary-hover: #bf360c;
+    }
+
+    body.dark-mode {
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --text-color: #f0f0f0;
+      --subtext-color: #b0b0b0;
+      --input-border: #333333;
+      --primary-color: #ff7043;
+      --primary-hover: #f4511e;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding: 24px;
+      margin: 0;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .action-btn {
+      background: none;
+      border: 1px solid var(--input-border);
+      color: var(--text-color);
+      padding: 6px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      width: auto;
+      margin: 0;
+    }
+
+    .action-btn:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .form-card, .recipe-card, .search-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+
+    h1, h2 {
+      margin-top: 0;
+      color: var(--primary-color);
+    }
+
+    h3 {
+      margin-top: 14px;
+      margin-bottom: 8px;
+      color: var(--subtext-color);
+      font-size: 1rem;
+    }
+
+    input[type="text"], textarea, button.save-btn {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      margin-bottom: 12px;
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-family: inherit;
+      background-color: var(--card-bg);
+      color: var(--text-color);
+    }
+
+    .file-input-wrapper {
+      margin-bottom: 12px;
+    }
+
+    .file-input-wrapper label {
+      font-size: 0.85rem;
+      color: var(--subtext-color);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    #search-input {
+      margin-bottom: 0;
+      font-size: 0.95rem;
+    }
+
+    button.save-btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 12px;
+    }
+
+    button.save-btn:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn-small {
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: bold;
+      border: 1px solid transparent;
+      width: auto;
+    }
+
+    .edit-btn {
+      background-color: #e3f2fd;
+      color: #1565c0;
+      border-color: #bbdefb;
+    }
+    .edit-btn:hover { background-color: #90caf9; }
+
+    .print-btn {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+      border-color: #c8e6c9;
+    }
+    .print-btn:hover { background-color: #a5d6a7; }
+
+    .delete-btn {
+      background-color: #ffebee;
+      color: #c62828;
+      border-color: #ffcdd2;
+    }
+    .delete-btn:hover { background-color: #ef9a9a; }
+
+    .recipe-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .recipe-header h2 {
+      margin: 0;
+      font-size: 1.25rem;
+    }
+
+    .recipe-image {
+      width: 100%;
+      max-height: 220px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-top: 12px;
+      display: block;
+    }
+
+    .preview-box {
+      width: 100%;
+      max-height: 150px;
+      object-fit: cover;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    .recipe-body {
+      display: none;
+      margin-top: 14px;
+      border-top: 1px solid var(--input-border);
+      padding-top: 10px;
+    }
+
+    .recipe-body.active {
+      display: block;
+    }
+
+    /* चेकबक्स स्टाइल */
+    .ingredient-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+
+    .ingredient-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 0;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .ingredient-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .ingredient-item.checked span {
+      text-decoration: line-through;
+      color: var(--subtext-color);
+      opacity: 0.7;
+    }
+
+    ol {
+      padding-left: 20px;
+      line-height: 1.6;
+    }
+
+    .empty-msg {
+      text-align: center;
+      color: var(--subtext-color);
+      padding: 20px 0;
+    }
+
+    .arrow {
+      font-size: 0.9rem;
+      color: var(--subtext-color);
+    }
+
+    /* प्रिन्ट गर्दा कार्ड मात्र सफा देखिने र अन्य कुरा लुक्ने */
+    @media print {
+      body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        padding: 0;
+      }
+      .top-bar, .form-card, .search-card, .button-group, .arrow {
+        display: none !important;
+      }
+      .recipe-card {
+        box-shadow: none !important;
+        border: 1px solid #ccc;
+        page-break-inside: avoid;
+      }
+      .recipe-body {
+        display: block !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="top-bar">
+      <h2 style="margin: 0;">My Recipes</h2>
+      <div class="top-actions">
+        <button class="action-btn" onclick="exportData()">⬇ Export</button>
+        <button class="action-btn" onclick="document.getElementById('import-file').click()">⬆ Import</button>
+        <button class="action-btn" onclick="toggleDarkMode()" id="theme-btn">🌙 Theme</button>
+        <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importData(event)">
+      </div>
+    </div>
+
+    <!-- फारम -->
+    <div class="form-card">
+      <h2 id="form-heading">Add New Recipe</h2>
+      <input type="text" id="title-input" placeholder="रेसिपीको नाम (उदा: Sel Roti)">
+      
+      <div class="file-input-wrapper">
+        <label>कम्प्युटर वा मोबाइलबाट फोटो अपलोड गर्नुहोस्:</label>
+        <input type="file" id="local-image-input" accept="image/*" onchange="previewLocalImage(event)">
+      </div>
+
+      <input type="text" id="image-input" placeholder="वा फोटोको लिङ्क / Image URL टाँस्नुहोस्" oninput="previewUrlImage()">
+      <img id="form-image-preview" class="preview-box" alt="Image Preview">
+
+      <textarea id="ingredients-input" rows="3" placeholder="सामग्रीहरू (प्रत्येक लाइनमा एउटा)"></textarea>
+      <textarea id="instructions-input" rows="3" placeholder="बनाउने विधि (प्रत्येक लाइनमा एउटा स्टेप)"></textarea>
+      <button class="save-btn" id="save-btn" onclick="addOrUpdateRecipe()">Save Recipe</button>
+    </div>
+
+    <!-- खोज्ने बाकस -->
+    <div class="search-card">
+      <input type="text" id="search-input" placeholder="🔍 रेसिपी खोज्नुहोस्..." oninput="handleSearch()">
+    </div>
+
+    <!-- रेसिपीहरूको सूची -->
+    <div id="recipe-list"></div>
+  </div>
+
+  <script>
+    const defaultRecipes = [
+      {
+        title: "Classic Banana Oatmeal Cookies",
+        image: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=500&auto=format&fit=crop&q=60",
+        ingredients: [
+          "2 ripe bananas (mashed)",
+          "1 cup rolled oats",
+          "1/4 cup dark chocolate chips or raisins",
+          "1/2 tsp cinnamon powder"
+        ],
+        instructions: [
+          "Preheat your oven to 180°C (350°F).",
+          "Mash the bananas in a bowl until smooth.",
+          "Stir in the oats, cinnamon, and chocolate chips.",
+          "Scoop spoonfuls onto a lined baking tray.",
+          "Bake for 12–15 minutes until lightly golden."
+        ]
+      }
+    ];
+
+    let recipes = JSON.parse(localStorage.getItem('myRecipes')) || defaultRecipes;
+    let editIndex = null;
+    let selectedImageBase64 = "";
+
+    function saveToStorage() {
+      localStorage.setItem('myRecipes', JSON.stringify(recipes));
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      const isDark = document.body.classList.contains('dark-mode');
+      localStorage.setItem('darkMode', isDark);
+      document.getElementById('theme-btn').textContent = isDark ? '☀️ Theme' : '🌙 Theme';
+    }
+
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.body.classList.add('dark-mode');
+      document.getElementById('theme-btn').textContent = '☀️ Theme';
+    }
+
+    function previewLocalImage(event) {
+      const file = event.target.files[0];
+      const preview = document.getElementById('form-image-preview');
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          selectedImageBase64 = e.target.result;
+          preview.src = selectedImageBase64;
+          preview.style.display = 'block';
+          document.getElementById('image-input').value = '';
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function previewUrlImage() {
+      const url = document.getElementById('image-input').value.trim();
+      const preview = document.getElementById('form-image-preview');
+      if (url) {
+        selectedImageBase64 = url;
+        preview.src = url;
+        preview.style.display = 'block';
+        document.getElementById('local-image-input').value = '';
+      } else {
+        selectedImageBase64 = "";
+        preview.style.display = 'none';
+      }
+    }
+
+    function toggleDetails(index) {
+      const body = document.getElementById(`recipe-body-${index}`);
+      const arrow = document.getElementById(`arrow-${index}`);
+      if (body.classList.contains('active')) {
+        body.classList.remove('active');
+        arrow.textContent = '▼';
+      } else {
+        body.classList.add('active');
+        arrow.textContent = '▲';
+      }
+    }
+
+    // चेकबक्स थिच्दा स्ट्राइक-थ्रु गराउने फङ्सन
+    function toggleIngredientCheck(checkbox) {
+      const parent = checkbox.closest('.ingredient-item');
+      if (checkbox.checked) {
+        parent.classList.add('checked');
+      } else {
+        parent.classList.remove('checked');
+      }
+    }
+
+    function displayRecipes(filterText = '') {
+      const listContainer = document.getElementById('recipe-list');
+      listContainer.innerHTML = '';
+
+      const filtered = recipes.filter(r => 
+        r.title.toLowerCase().includes(filterText.toLowerCase())
+      );
+
+      if (filtered.length === 0) {
+        listContainer.innerHTML = '<div class="empty-msg">कुनै रेसिपी फेला परेन।</div>';
+        return;
+      }
+
+      filtered.forEach((recipe) => {
+        const originalIndex = recipes.indexOf(recipe);
+        const card = document.createElement('div');
+        card.className = 'recipe-card';
+
+        // चेकबक्ससहितको सामग्री सूची
+        const ingredientsHtml = recipe.ingredients.map(item => `
+          <li class="ingredient-item">
+            <input type="checkbox" onchange="toggleIngredientCheck(this)">
+            <span>${item}</span>
+          </li>
+        `).join('');
+
+        const instructionsHtml = recipe.instructions.map(step => `<li>${step}</li>`).join('');
+        const imageHtml = recipe.image ? `<img src="${recipe.image}" class="recipe-image" alt="${recipe.title}" onerror="this.style.display='none'">` : '';
+
+        card.innerHTML = `
+          <div class="recipe-header" onclick="toggleDetails(${originalIndex})">
+            <h2>${recipe.title}</h2>
+            <span class="arrow" id="arrow-${originalIndex}">▼</span>
+          </div>
+          ${imageHtml}
+          <div class="recipe-body" id="recipe-body-${originalIndex}">
+            <h3>सामग्रीहरू (Checklist)</h3>
+            <ul class="ingredient-list">${ingredientsHtml}</ul>
+            <h3>बनाउने विधि</h3>
+            <ol>${instructionsHtml}</ol>
+            <div class="button-group">
+              <button class="btn-small edit-btn" onclick="startEdit(${originalIndex})">✏️ Edit</button>
+              <button class="btn-small print-btn" onclick="printSingleRecipe(${originalIndex})">🖨️ Print / PDF</button>
+              <button class="btn-small delete-btn" onclick="deleteRecipe(${originalIndex})">🗑️ Delete</button>
+            </div>
+          </div>
+        `;
+
+        listContainer.appendChild(card);
+      });
+    }
+
+    function addOrUpdateRecipe() {
+      const title = document.getElementById('title-input').value.trim();
+      const ingredientsText = document.getElementById('ingredients-input').value.trim();
+      const instructionsText = document.getElementById('instructions-input').value.trim();
+
+      if (!title) {
+        alert("कृपया रेसिपीको नाम लेख्नुहोस्!");
+        return;
+      }
+
+      const recipeData = {
+        title: title,
+        image: selectedImageBase64,
+        ingredients: ingredientsText ? ingredientsText.split('\n') : [],
+        instructions: instructionsText ? instructionsText.split('\n') : []
+      };
+
+      if (editIndex !== null) {
+        recipes[editIndex] = recipeData;
+        editIndex = null;
+        document.getElementById('form-heading').textContent = "Add New Recipe";
+        document.getElementById('save-btn').textContent = "Save Recipe";
+      } else {
+        recipes.push(recipeData);
+      }
+
+      saveToStorage();
+      document.getElementById('search-input').value = '';
+      displayRecipes();
+
+      document.getElementById('title-input').value = '';
+      document.getElementById('local-image-input').value = '';
+      document.getElementById('image-input').value = '';
+      document.getElementById('form-image-preview').style.display = 'none';
+      selectedImageBase64 = "";
+      document.getElementById('ingredients-input').value = '';
+      document.getElementById('instructions-input').value = '';
+    }
+
+    function startEdit(index) {
+      editIndex = index;
+      const recipe = recipes[index];
+
+      document.getElementById('title-input').value = recipe.title;
+      document.getElementById('ingredients-input').value = recipe.ingredients.join('\n');
+      document.getElementById('instructions-input').value = recipe.instructions.join('\n');
+
+      selectedImageBase64 = recipe.image || '';
+      const preview = document.getElementById('form-image-preview');
+      if (selectedImageBase64) {
+        preview.src = selectedImageBase64;
+        preview.style.display = 'block';
+        if (selectedImageBase64.startsWith('http')) {
+          document.getElementById('image-input').value = selectedImageBase64;
+        }
+      } else {
+        preview.style.display = 'none';
+      }
+
+      document.getElementById('form-heading').textContent = "Edit Recipe";
+      document.getElementById('save-btn').textContent = "Update Recipe";
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function printSingleRecipe(index) {
+      // प्रिन्ट गर्दा त्यो रेसिपीको बडी खुलेको सुनिश्चित गर्ने
+      const body = document.getElementById(`recipe-body-${index}`);
+      body.classList.add('active');
+      window.print();
+    }
+
+    function handleSearch() {
+      const query = document.getElementById('search-input').value.trim();
+      displayRecipes(query);
+    }
+
+    function deleteRecipe(index) {
+      if (confirm("के तपाईं यो रेसिपी मेटाउन चाहनुहुन्छ?")) {
+        recipes.splice(index, 1);
+        saveToStorage();
+        const query = document.getElementById('search-input').value.trim();
+        displayRecipes(query);
+      }
+    }
+
+    function exportData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(recipes, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "my_recipes_backup.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (Array.isArray(imported)) {
+            recipes = imported;
+            saveToStorage();
+            displayRecipes();
+            alert("रेसिपी सफलतापूर्वक लोड भयो!");
+          } else {
+            alert("अमान्य फाइल ढाँचा!");
+          }
+        } catch (err) {
+          alert("फाइल लोड गर्न सकिएन!");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    displayRecipes();
+  </script>
+
+</body>
+</html>
